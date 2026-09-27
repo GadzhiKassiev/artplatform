@@ -1,0 +1,34 @@
+type Course {
+  id: ID!
+  authorId: ID!
+  title: String!
+  description: String!
+  price: Float!
+  status: String!
+}
+
+input CreateCourseInput {
+  title: String!
+  description: String!
+  price: Float!
+}
+
+input UpdateCourseInput {
+  id: ID!
+  title: String!
+  description: String!
+  price: Float!
+  status: String!
+}
+
+extend type Query {
+  getCourse(id: ID!): Course
+  getCourses(authorId: ID): [Course!]!
+}
+
+extend type Mutation {
+  createCourse(input: CreateCourseInput!): Course!
+  updateCourse(input: UpdateCourseInput!): Course!
+  deleteCourse(id: ID!): Boolean!
+  publishCourse(id: ID!): Course!
+}

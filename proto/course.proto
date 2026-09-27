@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package course;
+
+option go_package = "artplatform/backend/proto/course";
+
+service CourseService {
+  rpc CreateCourse(CreateCourseRequest) returns (CourseResponse);
+  rpc GetCourse(GetCourseRequest) returns (CourseResponse);
+  rpc GetCourses(GetCoursesRequest) returns (GetCoursesResponse);
+  rpc UpdateCourse(UpdateCourseRequest) returns (CourseResponse);
+  rpc DeleteCourse(DeleteCourseRequest) returns (DeleteCourseResponse);
+  rpc PublishCourse(PublishCourseRequest) returns (CourseResponse);
+}
+
+message Course {
+  string id = 1;
+  string author_id = 2;
+  string title = 3;
+  string description = 4;
+  double price = 5;
+  string status = 6;
+}
+
+message CreateCourseRequest {
+  string author_id = 1;
+  string title = 2;
+  string description = 3;
+  double price = 4;
+}
+
+message GetCourseRequest {
+  string id = 1;
+}
+
+message GetCoursesRequest {
+  string author_id = 1;
+}
+
+message GetCoursesResponse {
+  repeated Course courses = 1;
+}
+
+message UpdateCourseRequest {
+  string id = 1;
+  string requester_id = 2;
+  string title = 3;
+  string description = 4;
+  double price = 5;
+  string status = 6;
+}
+
+message DeleteCourseRequest {
+  string id = 1;
+  string requester_id = 2;
+}
+
+message DeleteCourseResponse {
+  bool success = 1;
+}
+
+message CourseResponse {
+  Course course = 1;
+}
+
+message PublishCourseRequest {
+  string id = 1;
+  string requester_id = 2;
+}

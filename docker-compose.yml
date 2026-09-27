@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: artplatform-postgres
+    environment:
+      POSTGRES_USER: artplatform
+      POSTGRES_PASSWORD: artplatform
+      POSTGRES_DB: artplatform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U artplatform"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: auth
+    container_name: artplatform-auth
+    environment:
+      DATABASE_URL: postgres://artplatform:artplatform@postgres:5432/artplatform?sslmode=disable
+      PORT: "8001"
+      JWT_SECRET: "dev-secret-change-me"
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  course:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: course
+    container_name: artplatform-course
+    environment:
+      DATABASE_URL: postgres://artplatform:artplatform@postgres:5432/artplatform?sslmode=disable
+      PORT: "8002"
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: gateway
+    container_name: artplatform-gateway
+    environment:
+      PORT: "8000"
+      AUTH_URL: "auth:8001"
+      COURSE_URL: "course:8002"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth
+      - course
+
+volumes:
+  postgres_data:
