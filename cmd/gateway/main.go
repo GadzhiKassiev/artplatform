@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"context"
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -15,19 +15,20 @@ import (
 )
 
 func main() {
-	logging.Init()
+	logging.Init(logging.LevelInfo, logging.FormatJSON)
 
 	cfg := config.Load()
+	ctx := context.Background()
 
 	authClient, authConn, err := grpctransport.NewAuthClient(cfg.AuthURL)
 	if err != nil {
-		log.Fatalf("failed to connect to auth: %v", err)
+		logging.Fatal("failed to connect to auth", logging.NewKV("error", err))
 	}
 	defer authConn.Close()
 
 	courseClient, courseConn, err := grpctransport.NewCourseClient(cfg.CourseURL)
 	if err != nil {
-		log.Fatalf("failed to connect to course: %v", err)
+		logging.Fatal("failed to connect to course", logging.NewKV("error", err))
 	}
 	defer courseConn.Close()
 
@@ -39,6 +40,7 @@ func main() {
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
 		Resolvers: resolver,
 	}))
+	srv.SetErrorPresenter(graphql.ErrorPresenter)
 
 	authMW := &graphql.AuthMiddleware{AuthClient: authClient}
 
@@ -46,8 +48,8 @@ func main() {
 	mux.Handle("/query", authMW.Middleware(srv))
 	mux.Handle("/", playground.Handler("GraphQL Playground", "/query"))
 
-	log.Printf("gateway listening on :%s", cfg.Port)
+	logging.Info(ctx, "gateway listening", logging.NewKV("port", cfg.Port))
 	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		logging.Fatal("failed to serve", logging.NewKV("error", err))
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"artplatform/backend/internal/service/course/model"
+	grpctransport "artplatform/backend/internal/transport/grpc"
 	coursepb "artplatform/backend/proto/course"
 )
 
@@ -26,7 +27,7 @@ func (s *GRPCServer) CreateCourse(ctx context.Context, req *coursepb.CreateCours
 		Price:       req.Price,
 	})
 	if err != nil {
-		return nil, err
+		return nil, grpctransport.EncodeError(err)
 	}
 	return &coursepb.CourseResponse{Course: toProto(c)}, nil
 }
@@ -34,7 +35,7 @@ func (s *GRPCServer) CreateCourse(ctx context.Context, req *coursepb.CreateCours
 func (s *GRPCServer) GetCourse(ctx context.Context, req *coursepb.GetCourseRequest) (*coursepb.CourseResponse, error) {
 	c, err := s.service.GetByID(ctx, req.Id)
 	if err != nil {
-		return nil, err
+		return nil, grpctransport.EncodeError(err)
 	}
 	return &coursepb.CourseResponse{Course: toProto(c)}, nil
 }
@@ -48,7 +49,7 @@ func (s *GRPCServer) GetCourses(ctx context.Context, req *coursepb.GetCoursesReq
 		courses, err = s.service.GetAll(ctx)
 	}
 	if err != nil {
-		return nil, err
+		return nil, grpctransport.EncodeError(err)
 	}
 	resp := &coursepb.GetCoursesResponse{Courses: make([]*coursepb.Course, len(courses))}
 	for i, c := range courses {
@@ -67,7 +68,7 @@ func (s *GRPCServer) UpdateCourse(ctx context.Context, req *coursepb.UpdateCours
 		Status:      model.Status(req.Status),
 	})
 	if err != nil {
-		return nil, err
+		return nil, grpctransport.EncodeError(err)
 	}
 	return &coursepb.CourseResponse{Course: toProto(c)}, nil
 }
@@ -75,7 +76,7 @@ func (s *GRPCServer) UpdateCourse(ctx context.Context, req *coursepb.UpdateCours
 func (s *GRPCServer) DeleteCourse(ctx context.Context, req *coursepb.DeleteCourseRequest) (*coursepb.DeleteCourseResponse, error) {
 	err := s.service.Delete(ctx, req.Id, req.RequesterId)
 	if err != nil {
-		return nil, err
+		return nil, grpctransport.EncodeError(err)
 	}
 	return &coursepb.DeleteCourseResponse{Success: true}, nil
 }
@@ -94,7 +95,7 @@ func toProto(c model.Course) *coursepb.Course {
 func (s *GRPCServer) PublishCourse(ctx context.Context, req *coursepb.PublishCourseRequest) (*coursepb.CourseResponse, error) {
 	c, err := s.service.Publish(ctx, req.Id, req.RequesterId)
 	if err != nil {
-		return nil, err
+		return nil, grpctransport.EncodeError(err)
 	}
 	return &coursepb.CourseResponse{Course: toProto(c)}, nil
 }

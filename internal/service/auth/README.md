@@ -33,7 +33,7 @@ User {
 ## Зависимости
 
 - **Postgres** - БД
-- **JWT-утилита** - `internal/pkg/jwt`
+- **JWT-утилита** - `internal/jwt`
 
 ## Тесты
 

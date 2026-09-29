@@ -89,7 +89,7 @@ func (s *PostgresStorage) UpdateCourse(ctx context.Context, course model.Course)
 		WHERE id = $1
 	`
 	tag, err := s.pool.Exec(ctx, query,
-		course.Title, course.Description, course.Price, course.Status, course.UpdatedAt,
+		course.ID, course.Title, course.Description, course.Price, course.Status, course.UpdatedAt,
 	)
 	if err != nil {
 		return model.Course{}, err

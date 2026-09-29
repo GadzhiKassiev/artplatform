@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 
+	grpctransport "artplatform/backend/internal/transport/grpc"
 	authpb "artplatform/backend/proto/auth"
 )
 
@@ -24,7 +25,7 @@ func (s *GRPCServer) Register(ctx context.Context, req *authpb.RegisterRequest) 
 		Role:     req.Role,
 	})
 	if err != nil {
-		return nil, err
+		return nil, grpctransport.EncodeError(err)
 	}
 	return &authpb.RegisterResponse{
 		UserId: result.UserID,
@@ -35,7 +36,7 @@ func (s *GRPCServer) Register(ctx context.Context, req *authpb.RegisterRequest) 
 func (s *GRPCServer) Login(ctx context.Context, req *authpb.LoginRequest) (*authpb.LoginResponse, error) {
 	result, err := s.service.Login(ctx, req.Email, req.Password)
 	if err != nil {
-		return nil, err
+		return nil, grpctransport.EncodeError(err)
 	}
 	return &authpb.LoginResponse{
 		UserId: result.UserID,
@@ -46,7 +47,7 @@ func (s *GRPCServer) Login(ctx context.Context, req *authpb.LoginRequest) (*auth
 func (s *GRPCServer) ValidateToken(ctx context.Context, req *authpb.ValidateTokenRequest) (*authpb.ValidateTokenResponse, error) {
 	userID, role, err := s.service.ValidateToken(ctx, req.Token)
 	if err != nil {
-		return nil, err
+		return nil, grpctransport.EncodeError(err)
 	}
 	return &authpb.ValidateTokenResponse{
 		UserId: userID,
@@ -57,7 +58,7 @@ func (s *GRPCServer) ValidateToken(ctx context.Context, req *authpb.ValidateToke
 func (s *GRPCServer) GetUser(ctx context.Context, req *authpb.GetUserRequest) (*authpb.GetUserResponse, error) {
 	user, err := s.service.GetUserByID(ctx, req.UserId)
 	if err != nil {
-		return nil, err
+		return nil, grpctransport.EncodeError(err)
 	}
 	return &authpb.GetUserResponse{
 		UserId: user.ID,

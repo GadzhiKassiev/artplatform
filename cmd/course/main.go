@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 
 	"google.golang.org/grpc"
@@ -16,14 +15,14 @@ import (
 )
 
 func main() {
-	logging.Init()
+	logging.Init(logging.LevelInfo, logging.FormatJSON)
 
 	cfg := config.Load()
 	ctx := context.Background()
 
 	pool, err := pgstorage.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("failed to connect to postgres: %v", err)
+		logging.Fatal("failed to connect to postgres", logging.NewKV("error", err))
 	}
 	defer pool.Close()
 
@@ -33,14 +32,14 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+cfg.Port)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logging.Fatal("failed to listen", logging.NewKV("error", err))
 	}
 
 	s := grpc.NewServer()
 	coursepb.RegisterCourseServiceServer(s, grpcServer)
 
-	log.Printf("course service listening on :%s", cfg.Port)
+	logging.Info(ctx, "course service listening", logging.NewKV("port", cfg.Port))
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		logging.Fatal("failed to serve", logging.NewKV("error", err))
 	}
 }
