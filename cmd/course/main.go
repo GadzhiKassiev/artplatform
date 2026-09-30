@@ -11,14 +11,15 @@ import (
 	"artplatform/backend/internal/service/course"
 	"artplatform/backend/internal/service/course/storage"
 	pgstorage "artplatform/backend/internal/storage/postgres"
+	grpctransport "artplatform/backend/internal/transport/grpc"
 	coursepb "artplatform/backend/proto/course"
 )
 
 func main() {
 	logging.Init(logging.LevelInfo, logging.FormatJSON)
 
-	cfg := config.Load()
 	ctx := context.Background()
+	cfg := config.Load()
 
 	pool, err := pgstorage.New(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -35,7 +36,9 @@ func main() {
 		logging.Fatal("failed to listen", logging.NewKV("error", err))
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(grpctransport.ValidationInterceptor()),
+	)
 	coursepb.RegisterCourseServiceServer(s, grpcServer)
 
 	logging.Info(ctx, "course service listening", logging.NewKV("port", cfg.Port))

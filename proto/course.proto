@@ -4,6 +4,8 @@ package course;
 
 option go_package = "artplatform/backend/proto/course";
 
+import "buf/validate/validate.proto";
+
 service CourseService {
   rpc CreateCourse(CreateCourseRequest) returns (CourseResponse);
   rpc GetCourse(GetCourseRequest) returns (CourseResponse);
@@ -23,14 +25,14 @@ message Course {
 }
 
 message CreateCourseRequest {
-  string author_id = 1;
-  string title = 2;
-  string description = 3;
-  double price = 4;
+  string author_id   = 1 [(buf.validate.field).string.min_len = 1];
+  string title       = 2 [(buf.validate.field).string.min_len = 1];
+  string description = 3 [(buf.validate.field).string.max_len = 5000];
+  double price       = 4 [(buf.validate.field).double.gte = 0];
 }
 
 message GetCourseRequest {
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
 message GetCoursesRequest {
@@ -42,28 +44,28 @@ message GetCoursesResponse {
 }
 
 message UpdateCourseRequest {
-  string id = 1;
-  string requester_id = 2;
-  string title = 3;
-  string description = 4;
-  double price = 5;
-  string status = 6;
+  string id          = 1 [(buf.validate.field).string.min_len = 1];
+  string requester_id = 2 [(buf.validate.field).string.min_len = 1];
+  string title       = 3 [(buf.validate.field).string.min_len = 1];
+  string description = 4 [(buf.validate.field).string.max_len = 5000];
+  double price       = 5 [(buf.validate.field).double.gte = 0];
+  string status      = 6;
 }
 
 message DeleteCourseRequest {
-  string id = 1;
-  string requester_id = 2;
+  string id           = 1 [(buf.validate.field).string.min_len = 1];
+  string requester_id = 2 [(buf.validate.field).string.min_len = 1];
 }
 
 message DeleteCourseResponse {
   bool success = 1;
 }
 
-message CourseResponse {
-  Course course = 1;
+message PublishCourseRequest {
+  string id           = 1 [(buf.validate.field).string.min_len = 1];
+  string requester_id = 2 [(buf.validate.field).string.min_len = 1];
 }
 
-message PublishCourseRequest {
-  string id = 1;
-  string requester_id = 2;
+message CourseResponse {
+  Course course = 1;
 }

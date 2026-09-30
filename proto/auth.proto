@@ -4,6 +4,8 @@ package auth;
 
 option go_package = "artplatform/backend/proto/auth";
 
+import "buf/validate/validate.proto";
+
 service AuthService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
@@ -12,9 +14,11 @@ service AuthService {
 }
 
 message RegisterRequest {
-  string email = 1;
-  string password = 2;
-  string role = 3;
+  string email    = 1 [(buf.validate.field).string.email = true];
+  string password = 2 [(buf.validate.field).string.min_len = 6];
+  string role     = 3 [(buf.validate.field).string = {
+    in: ["STUDENT", "TEACHER"]
+  }];
 }
 
 message RegisterResponse {
@@ -23,8 +27,8 @@ message RegisterResponse {
 }
 
 message LoginRequest {
-  string email = 1;
-  string password = 2;
+  string email    = 1 [(buf.validate.field).string.email = true];
+  string password = 2 [(buf.validate.field).string.min_len = 1];
 }
 
 message LoginResponse {
@@ -33,7 +37,7 @@ message LoginResponse {
 }
 
 message ValidateTokenRequest {
-  string token = 1;
+  string token = 1 [(buf.validate.field).string.min_len = 1];
 }
 
 message ValidateTokenResponse {
@@ -42,7 +46,7 @@ message ValidateTokenResponse {
 }
 
 message GetUserRequest {
-  string user_id = 1;
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
 message GetUserResponse {

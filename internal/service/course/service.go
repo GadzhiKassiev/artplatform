@@ -32,15 +32,6 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (model.Course, 
 		logging.NewKV("title", input.Title),
 	)
 
-	if input.Title == "" {
-		logging.ContextWarn(ctx, "empty title")
-		return model.Course{}, courseerr.ErrEmptyTitle
-	}
-	if input.Price < 0 {
-		logging.ContextWarn(ctx, "invalid price", logging.NewKV("price", input.Price))
-		return model.Course{}, courseerr.ErrInvalidPrice
-	}
-
 	course := model.Course{
 		ID:          uuid.NewString(),
 		AuthorID:    input.AuthorID,
@@ -86,15 +77,6 @@ func (s *Service) Update(ctx context.Context, input UpdateInput) (model.Course, 
 		logging.NewKV("courseID", input.ID),
 		logging.NewKV("requesterID", input.RequesterID),
 	)
-
-	if input.Title == "" {
-		logging.ContextWarn(ctx, "empty title")
-		return model.Course{}, courseerr.ErrEmptyTitle
-	}
-	if input.Price < 0 {
-		logging.ContextWarn(ctx, "invalid price", logging.NewKV("price", input.Price))
-		return model.Course{}, courseerr.ErrInvalidPrice
-	}
 
 	course, err := s.storage.GetCourseByID(ctx, input.ID)
 	if err != nil {

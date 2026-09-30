@@ -13,15 +13,15 @@ import (
 	"artplatform/backend/internal/service/auth"
 	"artplatform/backend/internal/service/auth/storage"
 	pgstorage "artplatform/backend/internal/storage/postgres"
+	grpctransport "artplatform/backend/internal/transport/grpc"
 	authpb "artplatform/backend/proto/auth"
 )
 
 func main() {
 	logging.Init(logging.LevelInfo, logging.FormatJSON)
 
-	cfg := config.Load()
-
 	ctx := context.Background()
+	cfg := config.Load()
 
 	pool, err := pgstorage.New(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -39,7 +39,9 @@ func main() {
 		logging.Fatal("failed to listen", logging.NewKV("error", err))
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(grpctransport.ValidationInterceptor()),
+	)
 	authpb.RegisterAuthServiceServer(s, grpcServer)
 
 	logging.Info(ctx, "auth service listening", logging.NewKV("port", cfg.Port))

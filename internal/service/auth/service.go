@@ -43,11 +43,6 @@ func (s *Service) Register(ctx context.Context, input RegisterInput) (AuthResult
 		logging.NewKV("role", input.Role),
 	)
 
-	if input.Role != string(model.RoleStudent) && input.Role != string(model.RoleTeacher) {
-		logging.ContextWarn(ctx, "invalid role", logging.NewKV("role", input.Role))
-		return AuthResult{}, autherr.ErrInvalidRole
-	}
-
 	_, err := s.storage.GetUserByEmail(ctx, input.Email)
 	if err == nil {
 		logging.ContextWarn(ctx, "email already taken", logging.NewKV("email", input.Email))
