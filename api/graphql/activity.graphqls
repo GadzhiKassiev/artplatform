@@ -1,0 +1,13 @@
+type CourseStats {
+  courseId: ID!
+  viewCount: Int!
+  purchaseCount: Int!
+}
+
+extend type Query {
+  getCourseStats(courseId: ID!): CourseStats!
+}
+
+extend type Mutation {
+  recordView(courseId: ID!): Boolean!
+}

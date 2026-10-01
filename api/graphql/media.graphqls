@@ -1,0 +1,31 @@
+type Media {
+  id: ID!
+  ownerId: ID!
+  courseId: ID
+  fileName: String!
+  contentType: String!
+  size: Int!
+  status: String!
+  previewKey: String
+}
+
+input UploadMediaInput {
+  fileName: String!
+  contentType: String!
+  contentBase64: String!
+  courseId: ID
+}
+
+type PresignedURL {
+  url: String!
+  type: String!
+}
+
+extend type Query {
+  getMedia(id: ID!): Media!
+  getPresignedURL(mediaId: ID!): PresignedURL!
+}
+
+extend type Mutation {
+  uploadMedia(input: UploadMediaInput!): Media!
+}

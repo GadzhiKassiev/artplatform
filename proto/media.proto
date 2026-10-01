@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package media;
+
+option go_package = "artplatform/backend/proto/media";
+
+import "buf/validate/validate.proto";
+
+service MediaService {
+  rpc UploadMedia(UploadMediaRequest) returns (MediaResponse);
+  rpc GetMedia(GetMediaRequest) returns (MediaResponse);
+  rpc GetPresignedURL(GetPresignedURLRequest) returns (GetPresignedURLResponse);
+}
+
+message MediaFile {
+  string id = 1;
+  string owner_id = 2;
+  string course_id = 3;
+  string file_name = 4;
+  string content_type = 5;
+  int64 size = 6;
+  string original_key = 7;
+  string preview_key = 8;
+  string status = 9;
+}
+
+message UploadMediaRequest {
+  string owner_id = 1 [(buf.validate.field).string.min_len = 1];
+  string course_id = 2;
+  string file_name = 3 [(buf.validate.field).string.min_len = 1];
+  string content_type = 4 [(buf.validate.field).string = {
+    in: ["image/jpeg", "image/png", "image/webp", "image/gif"]
+  }];
+  bytes content = 5 [(buf.validate.field).bytes.min_len = 1];
+}
+
+message GetMediaRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetPresignedURLRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  string requester_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetPresignedURLResponse {
+  string url = 1;
+  string type = 2; // "original" | "preview"
+}
+
+message MediaResponse {
+  MediaFile media = 1;
+}

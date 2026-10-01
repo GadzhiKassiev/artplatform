@@ -1,0 +1,22 @@
+type Purchase {
+  id: ID!
+  userId: ID!
+  courseId: ID!
+  amount: Float!
+  status: String!
+  transactionId: ID
+}
+
+type CheckAccessResult {
+  hasAccess: Boolean!
+}
+
+extend type Query {
+  getPurchase(id: ID!): Purchase!
+  getUserPurchases: [Purchase!]!
+  checkCourseAccess(courseId: ID!): CheckAccessResult!
+}
+
+extend type Mutation {
+  purchaseCourse(courseId: ID!, amount: Float!): Purchase!
+}

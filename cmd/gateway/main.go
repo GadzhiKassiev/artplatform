@@ -32,9 +32,37 @@ func main() {
 	}
 	defer courseConn.Close()
 
+	mediaClient, mediaConn, err := grpctransport.NewMediaClient(cfg.MediaURL)
+	if err != nil {
+		logging.Fatal("failed to connect to media", logging.NewKV("error", err))
+	}
+	defer mediaConn.Close()
+
+	paymentClient, paymentConn, err := grpctransport.NewPaymentClient(cfg.PaymentURL)
+	if err != nil {
+		logging.Fatal("failed to connect to payment", logging.NewKV("error", err))
+	}
+	defer paymentConn.Close()
+
+	purchaseClient, purchaseConn, err := grpctransport.NewPurchaseClient(cfg.PurchaseURL)
+	if err != nil {
+		logging.Fatal("failed to connect to purchase", logging.NewKV("error", err))
+	}
+	defer purchaseConn.Close()
+
+	activityClient, activityConn, err := grpctransport.NewActivityClient(cfg.ActivityURL)
+	if err != nil {
+		logging.Fatal("failed to connect to activity", logging.NewKV("error", err))
+	}
+	defer activityConn.Close()
+
 	resolver := &graphql.Resolver{
-		AuthClient:   authClient,
-		CourseClient: courseClient,
+		AuthClient:     authClient,
+		CourseClient:   courseClient,
+		MediaClient:    mediaClient,
+		PaymentClient:  paymentClient,
+		PurchaseClient: purchaseClient,
+		ActivityClient: activityClient,
 	}
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{

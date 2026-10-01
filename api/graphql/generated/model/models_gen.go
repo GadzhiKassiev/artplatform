@@ -7,6 +7,10 @@ type AuthPayload struct {
 	Token  string `json:"token"`
 }
 
+type CheckAccessResult struct {
+	HasAccess bool `json:"hasAccess"`
+}
+
 type Course struct {
 	ID          string  `json:"id"`
 	AuthorID    string  `json:"authorId"`
@@ -14,6 +18,12 @@ type Course struct {
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 	Status      string  `json:"status"`
+}
+
+type CourseStats struct {
+	CourseID      string `json:"courseId"`
+	ViewCount     int    `json:"viewCount"`
+	PurchaseCount int    `json:"purchaseCount"`
 }
 
 type CreateCourseInput struct {
@@ -27,7 +37,32 @@ type LoginInput struct {
 	Password string `json:"password"`
 }
 
+type Media struct {
+	ID          string  `json:"id"`
+	OwnerID     string  `json:"ownerId"`
+	CourseID    *string `json:"courseId,omitempty"`
+	FileName    string  `json:"fileName"`
+	ContentType string  `json:"contentType"`
+	Size        int     `json:"size"`
+	Status      string  `json:"status"`
+	PreviewKey  *string `json:"previewKey,omitempty"`
+}
+
 type Mutation struct {
+}
+
+type PresignedURL struct {
+	URL  string `json:"url"`
+	Type string `json:"type"`
+}
+
+type Purchase struct {
+	ID            string  `json:"id"`
+	UserID        string  `json:"userId"`
+	CourseID      string  `json:"courseId"`
+	Amount        float64 `json:"amount"`
+	Status        string  `json:"status"`
+	TransactionID *string `json:"transactionId,omitempty"`
 }
 
 type Query struct {
@@ -45,6 +80,13 @@ type UpdateCourseInput struct {
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 	Status      string  `json:"status"`
+}
+
+type UploadMediaInput struct {
+	FileName      string  `json:"fileName"`
+	ContentType   string  `json:"contentType"`
+	ContentBase64 string  `json:"contentBase64"`
+	CourseID      *string `json:"courseId,omitempty"`
 }
 
 type User struct {

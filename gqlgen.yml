@@ -1,6 +1,9 @@
 schema:
   - ./api/graphql/auth.graphqls
   - ./api/graphql/course.graphqls
+  - ./api/graphql/media.graphqls
+  - ./api/graphql/purchase.graphqls
+  - ./api/graphql/activity.graphqls
 
 exec:
   filename: api/graphql/generated/generated.go

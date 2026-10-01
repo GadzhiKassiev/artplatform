@@ -17,6 +17,59 @@ services:
       timeout: 3s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: artplatform-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: artplatform-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: cortexproject/minio:RELEASE.2024-07-04T14-25-45Z
+    container_name: artplatform-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   auth:
     build:
       context: .
@@ -49,6 +102,114 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+  media:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: media
+    container_name: artplatform-media
+    environment:
+      DATABASE_URL: postgres://artplatform:artplatform@postgres:5432/artplatform?sslmode=disable
+      PORT: "8003"
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: "minioadmin"
+      MINIO_SECRET_KEY: "minioadmin"
+      MINIO_BUCKET: "artplatform-media"
+      MINIO_USE_SSL: "false"
+      KAFKA_BROKERS: "kafka:9092"
+    ports:
+      - "8003:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  media-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: media-worker
+    container_name: artplatform-media-worker
+    environment:
+      DATABASE_URL: postgres://artplatform:artplatform@postgres:5432/artplatform?sslmode=disable
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: "minioadmin"
+      MINIO_SECRET_KEY: "minioadmin"
+      MINIO_BUCKET: "artplatform-media"
+      MINIO_USE_SSL: "false"
+      KAFKA_BROKERS: "kafka:9092"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+  
+  payment:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: payment
+    container_name: artplatform-payment
+    environment:
+      DATABASE_URL: postgres://artplatform:artplatform@postgres:5432/artplatform?sslmode=disable
+      PORT: "8004"
+      KAFKA_BROKERS: "kafka:9092"
+    ports:
+      - "8004:8004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+  
+  purchase:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: purchase
+    container_name: artplatform-purchase
+    environment:
+      DATABASE_URL: postgres://artplatform:artplatform@postgres:5432/artplatform?sslmode=disable
+      PORT: "8005"
+      KAFKA_BROKERS: "kafka:9092"
+      PAYMENT_URL: "payment:8004"
+    ports:
+      - "8005:8005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      payment:
+        condition: service_started
+
+  activity:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: activity
+    container_name: artplatform-activity
+    environment:
+      PORT: "8006"
+      REDIS_ADDR: "redis:6379"
+      KAFKA_BROKERS: "kafka:9092"
+    ports:
+      - "8006:8006"
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   gateway:
     build:
@@ -61,11 +222,20 @@ services:
       PORT: "8000"
       AUTH_URL: "auth:8001"
       COURSE_URL: "course:8002"
+      MEDIA_URL: "media:8003"
+      PAYMENT_URL: "payment:8004"
+      PURCHASE_URL: "purchase:8005"
+      ACTIVITY_URL: "activity:8006"
     ports:
       - "8000:8000"
     depends_on:
       - auth
       - course
+      - media
+      - payment
+      - purchase
+      - activity 
 
 volumes:
   postgres_data:
+  minio_data:

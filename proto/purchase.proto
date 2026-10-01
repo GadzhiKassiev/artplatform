@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package purchase;
+
+option go_package = "artplatform/backend/proto/purchase";
+
+import "buf/validate/validate.proto";
+
+service PurchaseService {
+  rpc CreatePurchase(CreatePurchaseRequest) returns (PurchaseResponse);
+  rpc GetPurchase(GetPurchaseRequest) returns (PurchaseResponse);
+  rpc GetUserPurchases(GetUserPurchasesRequest) returns (GetUserPurchasesResponse);
+  rpc CheckAccess(CheckAccessRequest) returns (CheckAccessResponse);
+}
+
+message Purchase {
+  string id = 1;
+  string user_id = 2;
+  string course_id = 3;
+  double amount = 4;
+  string status = 5;
+  string transaction_id = 6;
+}
+
+message CreatePurchaseRequest {
+  string user_id   = 1 [(buf.validate.field).string.min_len = 1];
+  string course_id = 2 [(buf.validate.field).string.min_len = 1];
+  double amount    = 3 [(buf.validate.field).double.gt = 0];
+}
+
+message GetPurchaseRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetUserPurchasesRequest {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetUserPurchasesResponse {
+  repeated Purchase purchases = 1;
+}
+
+message CheckAccessRequest {
+  string user_id   = 1 [(buf.validate.field).string.min_len = 1];
+  string course_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message CheckAccessResponse {
+  bool has_access = 1;
+}
+
+message PurchaseResponse {
+  Purchase purchase = 1;
+}
