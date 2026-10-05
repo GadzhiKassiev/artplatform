@@ -19,7 +19,7 @@ type Purchase struct {
 	CourseID      string
 	Amount        float64
 	Status        Status
-	TransactionID string
+	TransactionID *string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

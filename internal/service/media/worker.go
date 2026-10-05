@@ -63,24 +63,24 @@ func (w *Worker) processMessage(ctx context.Context, key string, value []byte) e
 	original, err := w.minio.Download(ctx, event.OriginalKey)
 	if err != nil {
 		logging.ContextErrorE(ctx, "failed to download original", err)
-		_ = w.storage.UpdateStatus(ctx, event.MediaID, model.StatusFailed, "")
+		_ = w.storage.UpdateStatus(ctx, event.MediaID, model.StatusFailed, nil)
 		return err
 	}
 
 	preview, previewKey, err := w.generatePreview(event, original)
 	if err != nil {
 		logging.ContextErrorE(ctx, "failed to generate preview", err)
-		_ = w.storage.UpdateStatus(ctx, event.MediaID, model.StatusFailed, "")
+		_ = w.storage.UpdateStatus(ctx, event.MediaID, model.StatusFailed, nil)
 		return err
 	}
 
 	if err := w.minio.Upload(ctx, previewKey, preview, "image/jpeg"); err != nil {
 		logging.ContextErrorE(ctx, "failed to upload preview", err)
-		_ = w.storage.UpdateStatus(ctx, event.MediaID, model.StatusFailed, "")
+		_ = w.storage.UpdateStatus(ctx, event.MediaID, model.StatusFailed, nil)
 		return err
 	}
 
-	if err := w.storage.UpdateStatus(ctx, event.MediaID, model.StatusReady, previewKey); err != nil {
+	if err := w.storage.UpdateStatus(ctx, event.MediaID, model.StatusReady, &previewKey); err != nil {
 		logging.ContextErrorE(ctx, "failed to update status", err)
 		return err
 	}

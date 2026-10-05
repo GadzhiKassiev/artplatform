@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -21,7 +19,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	cfg := config.Load()
+	cfg := config.LoadMediaConfig()
 
 	pool, err := pgstorage.New(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -30,24 +28,23 @@ func main() {
 	defer pool.Close()
 
 	minioClient, err := storage.NewMinIO(ctx, storage.MinIOConfig{
-		Endpoint:  os.Getenv("MINIO_ENDPOINT"),
-		AccessKey: os.Getenv("MINIO_ACCESS_KEY"),
-		SecretKey: os.Getenv("MINIO_SECRET_KEY"),
-		Bucket:    os.Getenv("MINIO_BUCKET"),
-		UseSSL:    os.Getenv("MINIO_USE_SSL") == "true",
+		Endpoint:  cfg.MinIO.Endpoint,
+		AccessKey: cfg.MinIO.AccessKey,
+		SecretKey: cfg.MinIO.SecretKey,
+		Bucket:    cfg.MinIO.Bucket,
+		UseSSL:    cfg.MinIO.UseSSL,
 	})
 	if err != nil {
 		logging.Fatal("failed to connect to minio", logging.NewKV("error", err))
 	}
 
-	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
 	logging.Info(ctx, "waiting for kafka topic", logging.NewKV("topic", media.TopicMediaUploaded))
-	if err := kafka.WaitForKafka(brokers, media.TopicMediaUploaded, 30*time.Second); err != nil {
+	if err := kafka.WaitForKafka(cfg.KafkaBrokers, media.TopicMediaUploaded, 30*time.Second); err != nil {
 		logging.Fatal("failed to ensure kafka topic", logging.NewKV("error", err))
 	}
 	logging.Info(ctx, "kafka topic ready", logging.NewKV("topic", media.TopicMediaUploaded))
 	st := storage.NewPostgres(pool)
-	worker := media.NewWorker(st, minioClient, brokers)
+	worker := media.NewWorker(st, minioClient, cfg.KafkaBrokers)
 	defer worker.Close()
 
 	logging.Info(ctx, "media-worker starting")

@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"net"
-	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -26,18 +24,16 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	cfg := config.Load()
+	cfg := config.LoadActivityConfig()
 
-	redisClient, err := redisstorage.New(ctx, os.Getenv("REDIS_ADDR"))
+	redisClient, err := redisstorage.New(ctx, cfg.RedisAddr)
 	if err != nil {
 		logging.Fatal("failed to connect to redis", logging.NewKV("error", err))
 	}
 	defer redisClient.Close()
 
-	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
-
 	for _, topic := range []string{activity.TopicCourseViewed, activity.TopicPurchaseCreated} {
-		if err := kafka.WaitForKafka(brokers, topic, 30*time.Second); err != nil {
+		if err := kafka.WaitForKafka(cfg.KafkaBrokers, topic, 30*time.Second); err != nil {
 			logging.Fatal("failed to ensure topic", logging.NewKV("topic", topic), logging.NewKV("error", err))
 		}
 	}
@@ -47,7 +43,7 @@ func main() {
 	grpcServer := activity.NewGRPCServer(svc)
 
 	go func() {
-		if err := svc.StartConsumers(ctx, brokers); err != nil {
+		if err := svc.StartConsumers(ctx, cfg.KafkaBrokers); err != nil {
 			logging.ErrorE(ctx, "consumers failed", err)
 		}
 	}()

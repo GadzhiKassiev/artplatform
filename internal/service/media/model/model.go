@@ -16,12 +16,12 @@ const (
 type MediaFile struct {
 	ID          MediaID
 	OwnerID     string
-	CourseID    string
+	CourseID    *string
 	FileName    string
 	ContentType string
 	Size        int64
 	OriginalKey string
-	PreviewKey  string
+	PreviewKey  *string
 	Status      Status
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

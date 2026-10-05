@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"net"
-	"os"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -23,7 +21,7 @@ func main() {
 	logging.Init(logging.LevelInfo, logging.FormatJSON)
 	ctx := context.Background()
 
-	cfg := config.Load()
+	cfg := config.LoadPaymentConfig()
 
 	pool, err := pgstorage.New(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -31,13 +29,11 @@ func main() {
 	}
 	defer pool.Close()
 
-	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
-
-	if err := kafka.WaitForKafka(brokers, payment.TopicPaymentSucceeded, 30*time.Second); err != nil {
+	if err := kafka.WaitForKafka(cfg.KafkaBrokers, payment.TopicPaymentSucceeded, 30*time.Second); err != nil {
 		logging.Fatal("failed to ensure kafka topic", logging.NewKV("error", err))
 	}
 
-	producer := kafka.NewProducer(brokers)
+	producer := kafka.NewProducer(cfg.KafkaBrokers)
 	defer producer.Close()
 
 	st := storage.NewPostgres(pool)

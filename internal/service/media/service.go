@@ -62,10 +62,15 @@ func (s *Service) Upload(ctx context.Context, input UploadInput) (model.MediaFil
 		return model.MediaFile{}, mediaerr.ErrStorageError
 	}
 
+	var courseID *string
+	if input.CourseID != "" {
+		courseID = &input.CourseID
+	}
+
 	media := model.MediaFile{
 		ID:          mediaID,
 		OwnerID:     input.OwnerID,
-		CourseID:    input.CourseID,
+		CourseID:    courseID,
 		FileName:    input.FileName,
 		ContentType: input.ContentType,
 		Size:        int64(len(input.Content)),
@@ -116,8 +121,8 @@ func (s *Service) GetPresignedURL(ctx context.Context, id model.MediaID, request
 
 	key := media.OriginalKey
 	kind := "original"
-	if media.PreviewKey != "" && media.Status == model.StatusReady {
-		key = media.PreviewKey
+	if media.PreviewKey != nil && media.Status == model.StatusReady {
+		key = *media.PreviewKey
 		kind = "preview"
 	}
 

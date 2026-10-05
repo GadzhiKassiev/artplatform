@@ -19,9 +19,9 @@ import (
 
 func main() {
 	logging.Init(logging.LevelInfo, logging.FormatJSON)
-
 	ctx := context.Background()
-	cfg := config.Load()
+
+	cfg := config.LoadAuthConfig()
 
 	pool, err := pgstorage.New(ctx, cfg.DatabaseURL)
 	if err != nil {

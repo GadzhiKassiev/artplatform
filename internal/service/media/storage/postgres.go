@@ -17,6 +17,8 @@ type PostgresStorage struct {
 	pool *pgxpool.Pool
 }
 
+var _ Storage = (*PostgresStorage)(nil)
+
 func NewPostgres(pool *pgxpool.Pool) *PostgresStorage {
 	return &PostgresStorage{pool: pool}
 }
@@ -32,8 +34,8 @@ func (s *PostgresStorage) CreateMedia(ctx context.Context, media model.MediaFile
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 	_, err := s.pool.Exec(ctx, query,
-		media.ID, media.OwnerID, nullString(media.CourseID), media.FileName, media.ContentType,
-		media.Size, media.OriginalKey, nullString(media.PreviewKey), media.Status,
+		media.ID, media.OwnerID, media.CourseID, media.FileName, media.ContentType,
+		media.Size, media.OriginalKey, media.PreviewKey, media.Status,
 		media.CreatedAt, media.UpdatedAt,
 	)
 	if err != nil {
@@ -44,8 +46,8 @@ func (s *PostgresStorage) CreateMedia(ctx context.Context, media model.MediaFile
 
 func (s *PostgresStorage) GetMediaByID(ctx context.Context, id model.MediaID) (model.MediaFile, error) {
 	query := `
-		SELECT id, owner_id, COALESCE(course_id::text, ''), file_name, content_type, size,
-		       original_key, COALESCE(preview_key, ''), status, created_at, updated_at
+		SELECT id, owner_id, course_id, file_name, content_type, size,
+		       original_key, preview_key, status, created_at, updated_at
 		FROM media_files
 		WHERE id = $1
 	`
@@ -72,7 +74,7 @@ func (s *PostgresStorage) UpdateMedia(ctx context.Context, media model.MediaFile
 		WHERE id = $1
 	`
 	tag, err := s.pool.Exec(ctx, query,
-		media.ID, nullString(media.PreviewKey), media.Status, media.UpdatedAt,
+		media.ID, media.PreviewKey, media.Status, media.UpdatedAt,
 	)
 	if err != nil {
 		return model.MediaFile{}, err
@@ -87,14 +89,14 @@ func (s *PostgresStorage) UpdateStatus(
 	ctx context.Context,
 	id model.MediaID,
 	status model.Status,
-	previewKey string,
+	previewKey *string,
 ) error {
 	query := `
 		UPDATE media_files
 		SET status = $2, preview_key = $3, updated_at = now()
 		WHERE id = $1
 	`
-	tag, err := s.pool.Exec(ctx, query, id, status, nullString(previewKey))
+	tag, err := s.pool.Exec(ctx, query, id, status, previewKey)
 	if err != nil {
 		return err
 	}
@@ -102,11 +104,4 @@ func (s *PostgresStorage) UpdateStatus(
 		return ErrMediaNotFound
 	}
 	return nil
-}
-
-func nullString(s string) any {
-	if s == "" {
-		return nil
-	}
-	return s
 }

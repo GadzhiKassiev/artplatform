@@ -72,7 +72,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (model.Purchase
 		CourseID:      input.CourseID,
 		Amount:        input.Amount,
 		Status:        model.StatusCompleted,
-		TransactionID: payResp.Transaction.Id,
+		TransactionID: &payResp.Transaction.Id,
 	}
 
 	created, err := s.storage.CreatePurchase(ctx, purchase)

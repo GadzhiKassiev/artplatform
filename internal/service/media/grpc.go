@@ -50,15 +50,23 @@ func (s *GRPCServer) GetPresignedURL(ctx context.Context, req *mediapb.GetPresig
 }
 
 func toProto(m model.MediaFile) *mediapb.MediaFile {
+	courseID := ""
+	if m.CourseID != nil {
+		courseID = *m.CourseID
+	}
+	previewKey := ""
+	if m.PreviewKey != nil {
+		previewKey = *m.PreviewKey
+	}
 	return &mediapb.MediaFile{
 		Id:          m.ID,
 		OwnerId:     m.OwnerID,
-		CourseId:    m.CourseID,
+		CourseId:    courseID,
 		FileName:    m.FileName,
 		ContentType: m.ContentType,
 		Size:        m.Size,
 		OriginalKey: m.OriginalKey,
-		PreviewKey:  m.PreviewKey,
+		PreviewKey:  previewKey,
 		Status:      string(m.Status),
 	}
 }

@@ -62,12 +62,16 @@ func (s *GRPCServer) CheckAccess(ctx context.Context, req *purchasepb.CheckAcces
 }
 
 func toProto(p model.Purchase) *purchasepb.Purchase {
+	txID := ""
+	if p.TransactionID != nil {
+		txID = *p.TransactionID
+	}
 	return &purchasepb.Purchase{
 		Id:            p.ID,
 		UserId:        p.UserID,
 		CourseId:      p.CourseID,
 		Amount:        p.Amount,
 		Status:        string(p.Status),
-		TransactionId: p.TransactionID,
+		TransactionId: txID,
 	}
 }

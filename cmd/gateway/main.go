@@ -16,9 +16,9 @@ import (
 
 func main() {
 	logging.Init(logging.LevelInfo, logging.FormatJSON)
-
-	cfg := config.Load()
 	ctx := context.Background()
+
+	cfg := config.LoadGatewayConfig()
 
 	authClient, authConn, err := grpctransport.NewAuthClient(cfg.AuthURL)
 	if err != nil {
