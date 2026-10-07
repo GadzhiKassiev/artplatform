@@ -6,7 +6,6 @@ import (
 
 type MediaConfig struct {
 	BaseConfig
-	Port         string
 	MinIO        MinIOConfig
 	KafkaBrokers []string
 }
@@ -21,8 +20,7 @@ type MinIOConfig struct {
 
 func LoadMediaConfig() MediaConfig {
 	return MediaConfig{
-		BaseConfig: loadBase(),
-		Port:       getEnv("PORT", "8003"),
+		BaseConfig: loadBase("8003"),
 		MinIO: MinIOConfig{
 			Endpoint:  getEnv("MINIO_ENDPOINT", "minio:9000"),
 			AccessKey: getEnv("MINIO_ACCESS_KEY", "minioadmin"),

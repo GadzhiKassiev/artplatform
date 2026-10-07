@@ -5,12 +5,14 @@ import "os"
 type BaseConfig struct {
 	DatabaseURL string
 	JWTSecret   string
+	Port        string
 }
 
-func loadBase() BaseConfig {
+func loadBase(defaultPort string) BaseConfig {
 	return BaseConfig{
 		DatabaseURL: getEnv("DATABASE_URL", ""),
 		JWTSecret:   getEnv("JWT_SECRET", "dev-secret"),
+		Port:        getEnv("PORT", defaultPort),
 	}
 }
 
