@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -41,8 +42,8 @@ func EnsureTopic(brokers []string, topic string) error {
 		ReplicationFactor: 1,
 	})
 	if err != nil {
-		if err.Error() == "Topic with this name already exists." ||
-			contains(err.Error(), "already exists") {
+		var kafkaErr kafka.Error
+		if errors.As(err, &kafkaErr) && kafkaErr == kafka.TopicAlreadyExists {
 			return nil
 		}
 		return fmt.Errorf("create topic: %w", err)
@@ -71,13 +72,4 @@ func WaitForKafka(brokers []string, topic string, timeout time.Duration) error {
 			backoff *= 2
 		}
 	}
-}
-
-func contains(s, substr string) bool {
-	for i := 0; i+len(substr) <= len(s); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

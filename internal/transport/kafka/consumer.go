@@ -30,6 +30,10 @@ func NewConsumer(brokers []string, topic, groupID string, handler MessageHandler
 }
 
 func (c *Consumer) Run(ctx context.Context) error {
+	logging.ContextInfo(ctx, "kafka consumer started",
+		logging.NewKV("topic", c.reader.Config().Topic),
+		logging.NewKV("groupID", c.reader.Config().GroupID),
+	)
 	const (
 		initialBackoff = 1 * time.Second
 		maxBackoff     = 30 * time.Second

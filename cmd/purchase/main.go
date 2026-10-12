@@ -36,14 +36,14 @@ func main() {
 	producer := kafka.NewProducer(cfg.KafkaBrokers)
 	defer producer.Close()
 
-	paymentClient, paymentConn, err := grpctransport.NewPaymentClient(cfg.PaymentURL)
+	paymentClient, err := grpctransport.NewPaymentClient(cfg.PaymentURL)
 	if err != nil {
 		logging.Fatal("failed to connect to payment", logging.NewKV("error", err))
 	}
-	defer paymentConn.Close()
+	defer paymentClient.Close()
 
 	st := storage.NewPostgres(pool)
-	svc := purchase.New(st, producer, paymentClient)
+	svc := purchase.New(st, producer, paymentClient.Client)
 	grpcServer := purchase.NewGRPCServer(svc)
 
 	lis, err := net.Listen("tcp", ":"+cfg.Port)

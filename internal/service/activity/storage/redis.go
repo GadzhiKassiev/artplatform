@@ -10,8 +10,6 @@ import (
 	"artplatform/backend/internal/service/activity/model"
 )
 
-const statsTTL = 24 * time.Hour
-
 type RedisStorage struct {
 	client *redis.Client
 }
@@ -29,21 +27,11 @@ func purchasesKey(courseID string) string {
 }
 
 func (s *RedisStorage) IncrementViews(ctx context.Context, courseID string) error {
-	key := viewsKey(courseID)
-	pipe := s.client.Pipeline()
-	pipe.Incr(ctx, key)
-	pipe.Expire(ctx, key, statsTTL)
-	_, err := pipe.Exec(ctx)
-	return err
+	return s.client.Incr(ctx, viewsKey(courseID)).Err()
 }
 
 func (s *RedisStorage) IncrementPurchases(ctx context.Context, courseID string) error {
-	key := purchasesKey(courseID)
-	pipe := s.client.Pipeline()
-	pipe.Incr(ctx, key)
-	pipe.Expire(ctx, key, statsTTL)
-	_, err := pipe.Exec(ctx)
-	return err
+	return s.client.Incr(ctx, purchasesKey(courseID)).Err()
 }
 
 func (s *RedisStorage) GetStats(ctx context.Context, courseID string) (model.CourseStats, error) {

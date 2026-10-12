@@ -16,7 +16,7 @@ func NewProducer(brokers []string) *Producer {
 		writer: &kafka.Writer{
 			Addr:                   kafka.TCP(brokers...),
 			Balancer:               &kafka.LeastBytes{},
-			AllowAutoTopicCreation: true,
+			AllowAutoTopicCreation: false,
 		},
 	}
 }

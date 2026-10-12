@@ -20,49 +20,49 @@ func main() {
 
 	cfg := config.LoadGatewayConfig()
 
-	authClient, authConn, err := grpctransport.NewAuthClient(cfg.AuthURL)
+	authClient, err := grpctransport.NewAuthClient(cfg.AuthURL)
 	if err != nil {
 		logging.Fatal("failed to connect to auth", logging.NewKV("error", err))
 	}
-	defer authConn.Close()
+	defer authClient.Close()
 
-	courseClient, courseConn, err := grpctransport.NewCourseClient(cfg.CourseURL)
+	courseClient, err := grpctransport.NewCourseClient(cfg.CourseURL)
 	if err != nil {
 		logging.Fatal("failed to connect to course", logging.NewKV("error", err))
 	}
-	defer courseConn.Close()
+	defer courseClient.Close()
 
-	mediaClient, mediaConn, err := grpctransport.NewMediaClient(cfg.MediaURL)
+	mediaClient, err := grpctransport.NewMediaClient(cfg.MediaURL)
 	if err != nil {
 		logging.Fatal("failed to connect to media", logging.NewKV("error", err))
 	}
-	defer mediaConn.Close()
+	defer mediaClient.Close()
 
-	paymentClient, paymentConn, err := grpctransport.NewPaymentClient(cfg.PaymentURL)
+	paymentClient, err := grpctransport.NewPaymentClient(cfg.PaymentURL)
 	if err != nil {
 		logging.Fatal("failed to connect to payment", logging.NewKV("error", err))
 	}
-	defer paymentConn.Close()
+	defer paymentClient.Close()
 
-	purchaseClient, purchaseConn, err := grpctransport.NewPurchaseClient(cfg.PurchaseURL)
+	purchaseClient, err := grpctransport.NewPurchaseClient(cfg.PurchaseURL)
 	if err != nil {
 		logging.Fatal("failed to connect to purchase", logging.NewKV("error", err))
 	}
-	defer purchaseConn.Close()
+	defer purchaseClient.Close()
 
-	activityClient, activityConn, err := grpctransport.NewActivityClient(cfg.ActivityURL)
+	activityClient, err := grpctransport.NewActivityClient(cfg.ActivityURL)
 	if err != nil {
 		logging.Fatal("failed to connect to activity", logging.NewKV("error", err))
 	}
-	defer activityConn.Close()
+	defer activityClient.Close()
 
 	resolver := &graphql.Resolver{
-		AuthClient:     authClient,
-		CourseClient:   courseClient,
-		MediaClient:    mediaClient,
-		PaymentClient:  paymentClient,
-		PurchaseClient: purchaseClient,
-		ActivityClient: activityClient,
+		AuthClient:     authClient.Client,
+		CourseClient:   courseClient.Client,
+		MediaClient:    mediaClient.Client,
+		PaymentClient:  paymentClient.Client,
+		PurchaseClient: purchaseClient.Client,
+		ActivityClient: activityClient.Client,
 	}
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
@@ -70,7 +70,7 @@ func main() {
 	}))
 	srv.SetErrorPresenter(graphql.ErrorPresenter)
 
-	authMW := &graphql.AuthMiddleware{AuthClient: authClient}
+	authMW := &graphql.AuthMiddleware{AuthClient: authClient.Client}
 
 	mux := http.NewServeMux()
 	mux.Handle("/query", authMW.Middleware(srv))

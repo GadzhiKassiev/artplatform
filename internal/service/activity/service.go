@@ -45,8 +45,16 @@ type PurchaseCreatedEvent struct {
 }
 
 func (s *Service) StartConsumers(ctx context.Context, brokers []string) error {
+	logging.ContextInfo(ctx, "starting activity consumers",
+		logging.NewKV("brokers", brokers),
+	)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	viewConsumer := kafka.NewConsumer(brokers, TopicCourseViewed, ConsumerGroup, s.handleCourseViewed)
 	purchaseConsumer := kafka.NewConsumer(brokers, TopicPurchaseCreated, ConsumerGroup, s.handlePurchaseCreated)
+	defer viewConsumer.Close()
+	defer purchaseConsumer.Close()
 
 	errCh := make(chan error, 2)
 	go func() { errCh <- viewConsumer.Run(ctx) }()
@@ -54,8 +62,6 @@ func (s *Service) StartConsumers(ctx context.Context, brokers []string) error {
 
 	select {
 	case <-ctx.Done():
-		viewConsumer.Close()
-		purchaseConsumer.Close()
 		return nil
 	case err := <-errCh:
 		return err
