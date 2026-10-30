@@ -2,12 +2,14 @@ package config
 
 import (
 	"strings"
+	"time"
 )
 
 type MediaConfig struct {
 	BaseConfig
-	MinIO        MinIOConfig
-	KafkaBrokers []string
+	MinIO             MinIOConfig
+	KafkaBrokers      []string
+	ProcessingTimeout time.Duration
 }
 
 type MinIOConfig struct {
@@ -19,6 +21,7 @@ type MinIOConfig struct {
 }
 
 func LoadMediaConfig() MediaConfig {
+	timeout, _ := time.ParseDuration(getEnv("PROCESSING_TIMEOUT", "30s"))
 	return MediaConfig{
 		BaseConfig: loadBase("8003"),
 		MinIO: MinIOConfig{
@@ -28,6 +31,7 @@ func LoadMediaConfig() MediaConfig {
 			Bucket:    getEnv("MINIO_BUCKET", "artplatform-media"),
 			UseSSL:    getEnv("MINIO_USE_SSL", "false") == "true",
 		},
-		KafkaBrokers: strings.Split(getEnv("KAFKA_BROKERS", "kafka:9092"), ","),
+		ProcessingTimeout: timeout,
+		KafkaBrokers:      strings.Split(getEnv("KAFKA_BROKERS", "kafka:9092"), ","),
 	}
 }

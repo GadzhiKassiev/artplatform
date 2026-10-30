@@ -93,7 +93,7 @@ func (s *PostgresStorage) UpdateStatus(
 ) error {
 	query := `
 		UPDATE media_files
-		SET status = $2, preview_key = $3, updated_at = now()
+		SET status = $2, preview_key = $3, processing_started_at = NULL, updated_at = now()
 		WHERE id = $1
 	`
 	tag, err := s.pool.Exec(ctx, query, id, status, previewKey)
@@ -104,4 +104,21 @@ func (s *PostgresStorage) UpdateStatus(
 		return ErrMediaNotFound
 	}
 	return nil
+}
+
+func (s *PostgresStorage) TryAcquireForProcessing(ctx context.Context, id model.MediaID, timeout time.Duration) (bool, error) {
+	query := `
+		UPDATE media_files
+		SET status = $2, processing_started_at = now(), updated_at = now()
+		WHERE id = $1
+		  AND (
+		    status = $3
+		    OR (status = $2 AND processing_started_at < now() - $4::interval)
+		  )
+	`
+	tag, err := s.pool.Exec(ctx, query, id, model.StatusProcessing, model.StatusPending, timeout.String())
+	if err != nil {
+		return false, err
+	}
+	return tag.RowsAffected() > 0, nil
 }

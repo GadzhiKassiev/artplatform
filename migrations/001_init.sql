@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS media_files (
     original_key TEXT NOT NULL,
     preview_key  TEXT,
     status       TEXT NOT NULL DEFAULT 'PENDING',
+    processing_started_at TIMESTAMPTZ,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );

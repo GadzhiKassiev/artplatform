@@ -45,6 +45,7 @@ type MediaUploadedEvent struct {
 	MediaID     string `json:"media_id"`
 	OriginalKey string `json:"original_key"`
 	ContentType string `json:"content_type"`
+	Size        int64  `json:"size"`
 }
 
 func (s *Service) Upload(ctx context.Context, input UploadInput) (model.MediaFile, error) {
@@ -75,7 +76,7 @@ func (s *Service) Upload(ctx context.Context, input UploadInput) (model.MediaFil
 		ContentType: input.ContentType,
 		Size:        int64(len(input.Content)),
 		OriginalKey: originalKey,
-		Status:      model.StatusProcessing,
+		Status:      model.StatusPending,
 	}
 
 	created, err := s.storage.CreateMedia(ctx, media)
@@ -88,6 +89,7 @@ func (s *Service) Upload(ctx context.Context, input UploadInput) (model.MediaFil
 		MediaID:     created.ID,
 		OriginalKey: created.OriginalKey,
 		ContentType: created.ContentType,
+		Size:        created.Size,
 	}
 	if err := s.producer.Publish(ctx, TopicMediaUploaded, created.ID, event); err != nil {
 		logging.ContextErrorE(ctx, "failed to publish media.uploaded", err)

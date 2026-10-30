@@ -44,7 +44,7 @@ func main() {
 	}
 	logging.Info(ctx, "kafka topic ready", logging.NewKV("topic", media.TopicMediaUploaded))
 	st := storage.NewPostgres(pool)
-	worker := media.NewWorker(st, minioClient, cfg.KafkaBrokers)
+	worker := media.NewWorker(st, minioClient, cfg.KafkaBrokers, cfg.ProcessingTimeout)
 	defer worker.Close()
 
 	logging.Info(ctx, "media-worker starting")

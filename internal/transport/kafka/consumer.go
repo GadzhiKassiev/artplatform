@@ -45,7 +45,10 @@ func (c *Consumer) Run(ctx context.Context) error {
 	backoff := initialBackoff
 
 	for {
-		msg, err := c.reader.ReadMessage(ctx)
+		if ctx.Err() != nil {
+			return nil
+		}
+		msg, err := c.reader.FetchMessage(ctx)
 		if err != nil {
 			if ctx.Err() != nil {
 				return nil
@@ -70,9 +73,13 @@ func (c *Consumer) Run(ctx context.Context) error {
 		}
 
 		backoff = initialBackoff
-
-		if err := c.handler(ctx, string(msg.Key), msg.Value); err != nil {
-			logging.ContextErrorE(ctx, "handler failed", err)
+		taskCtx := context.Background()
+		if err := c.handler(taskCtx, string(msg.Key), msg.Value); err != nil {
+			logging.ContextErrorE(taskCtx, "handler failed", err)
+			continue
+		}
+		if err := c.reader.CommitMessages(taskCtx, msg); err != nil {
+			logging.ContextErrorE(taskCtx, "failed to commit offset", err)
 			continue
 		}
 	}

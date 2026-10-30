@@ -3,8 +3,10 @@ package media
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/disintegration/imaging"
 
@@ -17,6 +19,7 @@ import (
 const (
 	PreviewWidth   = 400
 	PreviewQuality = 85
+	MaxFileSize    = 50 * 1024 * 1024
 )
 
 type Worker struct {
@@ -24,12 +27,14 @@ type Worker struct {
 	minio    *storage.MinIOClient
 	handler  kafka.MessageHandler
 	consumer *kafka.Consumer
+	timeout  time.Duration
 }
 
-func NewWorker(st storage.Storage, minio *storage.MinIOClient, brokers []string) *Worker {
+func NewWorker(st storage.Storage, minio *storage.MinIOClient, brokers []string, timeout time.Duration) *Worker {
 	w := &Worker{
 		storage: st,
 		minio:   minio,
+		timeout: timeout,
 	}
 
 	w.handler = w.processMessage
@@ -53,6 +58,31 @@ func (w *Worker) processMessage(ctx context.Context, key string, value []byte) e
 	if err != nil {
 		logging.ContextErrorE(ctx, "failed to decode media.uploaded event", err)
 		return err
+	}
+
+	acquired, err := w.storage.TryAcquireForProcessing(ctx, event.MediaID, w.timeout)
+	if err != nil {
+		logging.ContextErrorE(ctx, "failed to acquire media for processing", err)
+		return err
+	}
+	if !acquired {
+		media, err := w.storage.GetMediaByID(ctx, event.MediaID)
+		if err != nil {
+			return err
+		}
+		if media.Status == model.StatusReady {
+			return nil
+		}
+		return errors.New("media is being processed by another worker")
+	}
+
+	if event.Size > MaxFileSize {
+		logging.ContextWarn(ctx, "file too large, skipping",
+			logging.NewKV("mediaID", event.MediaID),
+			logging.NewKV("size", event.Size),
+		)
+		_ = w.storage.UpdateStatus(ctx, event.MediaID, model.StatusFailed, nil)
+		return nil
 	}
 
 	logging.ContextInfo(ctx, "processing media",
